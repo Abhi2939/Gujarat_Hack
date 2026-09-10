@@ -8,4 +8,6 @@ torch>=2.0                 # Step 5 Re-ID backend runtime (also pulled in by ult
 torchreid>=0.2.5           # Step 5 OSNet — see osnet_embedder.py for the pretrained-weights note
 gdown                      # torchreid's import chain needs this even if you never use its download path
 tensorboard                # torchreid's import chain needs this too (engine module import)
+psycopg2-binary>=2.9       # Step 6 - Postgres/pgvector client
+redis>=5.0                  # Step 6 - Redis Streams client
 pytest>=8.0                # for tests/ — dev dependency, not needed at runtime
