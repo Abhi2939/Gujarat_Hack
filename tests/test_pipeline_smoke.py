@@ -13,7 +13,7 @@ class FakeRedis:
 
 
 class Cursor:
-    def execute(self, query, params):
+    def execute(self, query, params=None):
         self.query, self.params = query, params
 
     def fetchall(self):
