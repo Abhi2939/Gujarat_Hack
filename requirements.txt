@@ -1,0 +1,11 @@
+ultralytics>=8.3,<9
+supervision>=0.30,<0.31   # sv.ByteTrack removed in 0.31 — see tracker.py note before bumping
+opencv-python-headless>=4.10
+numpy>=1.26
+paddleocr>=3.0            # Step 3 OCR backend — see plate_ocr.py for the Indian-fine-tune note
+paddlepaddle>=3.0          # paddleocr's inference runtime (CPU wheel; use paddlepaddle-gpu for CUDA)
+torch>=2.0                 # Step 5 Re-ID backend runtime (also pulled in by ultralytics already)
+torchreid>=0.2.5           # Step 5 OSNet — see osnet_embedder.py for the pretrained-weights note
+gdown                      # torchreid's import chain needs this even if you never use its download path
+tensorboard                # torchreid's import chain needs this too (engine module import)
+pytest>=8.0                # for tests/ — dev dependency, not needed at runtime
