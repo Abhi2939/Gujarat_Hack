@@ -99,3 +99,49 @@ class ReIDEmbedding:
     def to_dict(self) -> dict:
         return asdict(self)
 
+@dataclass
+class VehicleMatch:
+    """One candidate match from Phase 4's tiered correlation search
+    (ML_FLOW.md Section 3): exact plate / fuzzy plate / Re-ID / attributes
+    only. `requires_review` is set by tier, not left to the caller to
+    decide — tiers 1-2 (plate-based) are confident enough to drive an
+    automatic alert; tiers 3-4 (Re-ID, attributes) are NOT, per the doc's
+    explicit confidence caveat on Re-ID, and the same logic extends to
+    the even-weaker attribute-only tier.
+    """
+
+    tier: int = 0
+    tier_name: str = ""
+    matched_camera_id: str = ""
+    matched_track_session_id: int = 0
+    matched_track_id: int = -1
+    confidence: float = 0.0
+    requires_review: bool = True
+    detail: str = ""
+
+
+@dataclass
+class WatchlistAlert:
+    """A plate read matched a watchlist entry. Only tiers 1-2 (exact/
+    fuzzy plate) produce these — see VehicleMatch's docstring for why
+    Re-ID/attribute matches don't directly become alerts in this scope."""
+
+    event_type: str = "watchlist.alert"
+    camera_id: str = ""
+    track_session_id: int = 0
+    track_id: int = -1
+    observed_plate_text: str = ""
+    matched_watchlist_plate: str = ""
+    watchlist_reason: str = ""
+    tier: int = 0
+    tier_name: str = ""
+    confidence: float = 0.0
+    requires_review: bool = False
+    timestamp: float = 0.0
+
+    def __post_init__(self):
+        if not self.timestamp:
+            self.timestamp = time()
+
+    def to_dict(self) -> dict:
+        return asdict(self)
