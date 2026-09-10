@@ -81,6 +81,8 @@ CREATE TABLE IF NOT EXISTS reid_embeddings (
 );
 CREATE INDEX IF NOT EXISTS idx_reid_embeddings_track
     ON reid_embeddings (camera_id, track_session_id, track_id, observed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reid_embeddings_cosine
+    ON reid_embeddings USING hnsw (embedding vector_cosine_ops);
 """.format(dim=REID_EMBEDDING_DIM)
 
 _HYPERTABLE_TABLES = ["vehicle_tracks", "plate_reads", "vehicle_attributes", "reid_embeddings"]

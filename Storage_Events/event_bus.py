@@ -5,7 +5,7 @@ import logging
 
 import redis
 
-from common.schemas import TrackedDetection, PlateRead, VehicleAttributes, ReIDEmbedding
+from common.schemas import TrackedDetection, PlateRead, VehicleAttributes, ReIDEmbedding, WatchlistAlert
 
 logger = logging.getLogger("netra.l6.event_bus")
 
@@ -36,6 +36,10 @@ def publish_vehicle_attributes(r: redis.Redis, events: list[VehicleAttributes]) 
 
 def publish_reid_embeddings(r: redis.Redis, events: list[ReIDEmbedding]) -> list[str]:
     return [_publish(r, e) for e in events]
+
+
+def publish_watchlist_alert(r: redis.Redis, alert: WatchlistAlert) -> str:
+    return _publish(r, alert)
 
 
 def read_recent(r: redis.Redis, event_type: str, count: int = 10) -> list[tuple[str, dict]]:

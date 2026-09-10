@@ -1,3 +1,64 @@
+"""OCR primitives for a detected licence-plate crop.
+
+The detector lives in :mod:`plate_detector`; keeping OCR independent makes it
+possible to unit test and to substitute an Indian-fine-tuned Paddle model.
+"""
+
+from __future__ import annotations
+
+from typing import Protocol
+
+import numpy as np
+
+from .deblur import DeblurBackend
+
+
+class OCRBackend(Protocol):
+    def read_text(self, image: np.ndarray) -> tuple[str, float]:
+        ...
+
+
+def _looks_multiline(plate_crop: np.ndarray, height_width_ratio_floor: float) -> bool:
+    height, width = plate_crop.shape[:2]
+    return width > 0 and height / width >= height_width_ratio_floor
+
+
+def _split_two_line(plate_crop: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    height = plate_crop.shape[0]
+    midpoint = max(1, height // 2)
+    return plate_crop[:midpoint, :], plate_crop[midpoint:, :]
+
+
+class PaddleOCRBackend:
+    """Small adapter around PaddleOCR, imported only when it is actually used."""
+
+    def __init__(self, lang: str = "en", **paddle_kwargs):
+        from paddleocr import PaddleOCR
+
+        self._ocr = PaddleOCR(lang=lang, **paddle_kwargs)
+
+    def read_text(self, image: np.ndarray) -> tuple[str, float]:
+        result = self._ocr.predict(image)
+        texts: list[str] = []
+        confidences: list[float] = []
+        # PaddleOCR v3 returns a list of result dictionaries.  The fallback
+        # supports the v2 ``ocr`` response shape used by older deployments.
+        for item in result or []:
+            if isinstance(item, dict):
+                item_texts = item.get("rec_texts", [])
+                item_scores = item.get("rec_scores", [])
+                texts.extend(str(text) for text in item_texts)
+                confidences.extend(float(score) for score in item_scores)
+            elif isinstance(item, (list, tuple)):
+                for line in item:
+                    if len(line) >= 2 and isinstance(line[1], (list, tuple)):
+                        texts.append(str(line[1][0]))
+                        confidences.append(float(line[1][1]))
+        return "".join(texts).replace(" ", "").upper(), (
+            float(sum(confidences) / len(confidences)) if confidences else 0.0
+        )
+
+
 class PlateReader:
     def __init__(self, backend: OCRBackend, height_width_ratio_floor: float = 0.55,
                  deblur_backend: DeblurBackend | None = None,
@@ -35,7 +96,7 @@ class PlateReader:
         if confidence >= self.retry_confidence_threshold:
             return result
 
-        from .blur_detector import is_blurry
+        from .blur_detection import is_blurry
         if not is_blurry(plate_crop, threshold=self.blur_score_threshold):
             return result
 

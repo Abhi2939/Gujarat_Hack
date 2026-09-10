@@ -104,7 +104,7 @@ def query_plates_fuzzy(conn, plate_text: str, max_distance: int = 2, limit: int 
     with conn.cursor() as cur:
         cur.execute("CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;")
         cur.execute(
-            "SELECT id, camera_id, plate_text, observed_at, "
+            "SELECT id, camera_id, track_session_id, track_id, plate_text, observed_at, "
             "       levenshtein(plate_text, %s) AS distance "
             "FROM plate_reads "
             "WHERE plate_text %% %s "
